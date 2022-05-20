@@ -11,7 +11,7 @@ const myBlogSchema = new mongoose.Schema({
 })
 const BlogDb = mongoose.model('blog', myBlogSchema)
 
-function updateBlogs(callback) {
+const updateBlogs = (callback) => {
     BlogDb.find({}, (err, blog) => {
         if (err) {
             console.log(err)
@@ -52,12 +52,8 @@ app.get('/:pathName', (req, resp) => {
             blogTitle = _.lowerCase(blog.heading)
             if (blogTitle === pathName) {
                 resp.render('blog', { blog: blog })
-                resp.end()
             }
         })
-            resp.send(`<h1>Blog post doesn't exit !</h1>`)
-            resp.end()
-        
     })
 })
 
@@ -69,7 +65,6 @@ app.post('/newBlog', (req, resp) => {
     blog.save((err) => {
         if (err) {
             console.log(err)
-            resp.send('Something wen wrong, please try again later')
             resp.end()
         }
         else {
@@ -84,7 +79,6 @@ app.post('/del', (req, resp) => {
     BlogDb.deleteOne({ _id: req.body.blogId }, (err) => {
         if (err) {
             console.log(err)
-            resp.send('Something wen wrong, please try again later')
             resp.end()
         }
         else {
