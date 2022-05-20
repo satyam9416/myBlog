@@ -87,5 +87,5 @@ app.post('/del', (req, res) => {
 })
 
 app.listen(process.env.PORT || 3000, () => {
-    console.log(`Listening on port ${port}`)
+    console.log(`Server stared...`)
 })
