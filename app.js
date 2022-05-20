@@ -46,15 +46,20 @@ app.get('/compose', (req, resp) => {
     resp.render('compose')
 })
 app.get('/:pathName', (req, resp) => {
+    let e = 'none'
     updateBlogs(() => {
         let pathName = _.lowerCase(req.params.pathName)
         blogs.forEach((blog) => {
             blogTitle = _.lowerCase(blog.heading)
             if (blogTitle === pathName) {
+                e = false
                 resp.render('blog', { blog: blog })
             }
         })
-        resp.send(`<h1>Blog post doesn't exit !</h1>`)
+        e = true
+        if(e === true){
+            resp.send(`<h1>Blog post doesn't exit !</h1>`)
+        }
     })
 })
 
