@@ -28,9 +28,9 @@ app.set('view engine', 'ejs')
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.static('public'))
 
-app.get('/home', (req, resp) => {
+app.get('/home', (req, res) => {
     updateBlogs(() => {
-        resp.render('home', { blogs: blogs, _: _ })
+        res.render('home', { blogs: blogs, _: _ })
     })
 })
 app.get('/', (req, resp) => {
@@ -46,20 +46,15 @@ app.get('/compose', (req, resp) => {
     resp.render('compose')
 })
 app.get('/:pathName', (req, resp) => {
-    let exist
-    updateBlogs((res, rej) => {
+    updateBlogs(() => {
         let pathName = _.lowerCase(req.params.pathName)
         blogs.forEach((blog) => {
             blogTitle = _.lowerCase(blog.heading)
             if (blogTitle === pathName) {
-                res(blog)
+                resp.render('blog', { blog: blog })
             }
         })
-        rej(`<h1>Blog post doesn't exit !</h1>`)
-    }).then((blog) => {
-        resp.render('blog', { blog: blog })
-    }).catch((warn) => {
-        resp.send(warn)
+        resp.send(`<h1>Blog post doesn't exit !</h1>`)
     })
 })
 
