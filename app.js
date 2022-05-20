@@ -51,6 +51,9 @@ app.get('/:pathName', (req, res) => {
             if (blogTitle === pathName) {
                 res.render('blog', { blog: blog })
             }
+            else{
+                res.send(`<h1>The Blog post is removed !</h1>`)
+            }
         })
     })
 })
