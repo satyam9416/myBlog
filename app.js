@@ -28,37 +28,42 @@ app.set('view engine', 'ejs')
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.static('public'))
 
-app.get('/home', (req, res) => {
+app.get('/home', (req, resp) => {
     updateBlogs(() => {
-        res.render('home', { blogs: blogs, _: _ })
+        resp.render('home', { blogs: blogs, _: _ })
     })
 })
-app.get('/', (req, res) => {
-    res.redirect('/home')
+app.get('/', (req, resp) => {
+    resp.redirect('/home')
 })
-app.get('/about', (req, res) => {
-    res.render('about')
+app.get('/about', (req, resp) => {
+    resp.render('about')
 })
-app.get('/contact', (req, res) => {
-    res.render('contact')
+app.get('/contact', (req, resp) => {
+    resp.render('contact')
 })
-app.get('/compose', (req, res) => {
-    res.render('compose')
+app.get('/compose', (req, resp) => {
+    resp.render('compose')
 })
-app.get('/:pathName', (req, res) => {
-    updateBlogs(() => {
+app.get('/:pathName', (req, resp) => {
+    let exist
+    updateBlogs((res, rej) => {
         let pathName = _.lowerCase(req.params.pathName)
         blogs.forEach((blog) => {
             blogTitle = _.lowerCase(blog.heading)
             if (blogTitle === pathName) {
-                res.render('blog', { blog: blog })
+                res(blog)
             }
         })
-        res.send(`<h1>The Blog post is removed !</h1>`)
+        rej(`<h1>Blog post doesn't exit !</h1>`)
+    }).then((blog) => {
+        resp.render('blog', { blog: blog })
+    }).catch((warn) => {
+        resp.send(warn)
     })
 })
 
-app.post('/newBlog', (req, res) => {
+app.post('/newBlog', (req, resp) => {
     heading = req.body.heading
     content = req.body.content
     newBlog = { heading: heading, content: content }
@@ -66,24 +71,26 @@ app.post('/newBlog', (req, res) => {
     blog.save((err) => {
         if (err) {
             console.log(err)
+            resp.send('Something wen wrong, please try again later')
         }
         else {
             console.log('A new blog saved !!')
         }
     })
     updateBlogs(() => {
-        res.redirect(`/${_.kebabCase(heading)}`)
+        resp.redirect(`/${_.kebabCase(heading)}`)
     })
 })
-app.post('/del', (req, res) => {
+app.post('/del', (req, resp) => {
     BlogDb.deleteOne({ _id: req.body.blogId }, (err) => {
         if (err) {
             console.log(err)
+            resp.send('Something wen wrong, please try again later')
         }
         else {
             console.log('Delete one blog Successully')
             updateBlogs(() => {
-                res.redirect('/home')
+                resp.redirect('/home')
             })
         }
     })
