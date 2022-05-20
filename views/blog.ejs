@@ -1,0 +1,19 @@
+<%- include('header') -%>
+<div class='single-blog-container'>
+    <div class="single-blog-heading flex-item">
+        <h2>
+            <%=blog.heading%>
+        </h2>
+    </div>
+    <div class="single-blog-content">
+        <h2>
+            <%=blog.content%>
+        </h2>
+    </div>
+    <form action="/del" method="post">
+        <input type="text" style = "display: none;" name='blogId' value="<%= blog._id %>">
+        <button type="submit" class="del-btn">Delete this blog</button>
+    </form>
+</div>
+
+<%- include('footer') -%>
