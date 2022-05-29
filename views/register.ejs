@@ -1,0 +1,21 @@
+<%- include('header') -%>
+
+<div class='single-blog-container'>
+    <div class="single-blog-heading flex-item register-heading">
+        <h2>
+            Register Now
+        </h2>
+    </div>
+    <form action="/register" method="post" class="register-form flex-item flex-column">
+        <input type="text" name="userName" placeholder="Enter Username" class="register-username" required autofocus
+            autocomplete="off">
+        <input type="email" class="register-email" name="email" placeholder="Enter Your Email Address"
+            class="register-username" required autocomplete="off">
+        <input type="password" name="key" class="register-key" placeholder="Enter Your Password"
+            class="register-username" required autocomplete="off">
+        <button type="submit" class="single-blog-heading register-btn">Register</button>
+    </form>
+</div>
+
+
+<%- include('footer') -%>

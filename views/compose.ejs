@@ -2,8 +2,8 @@
 
 <div class="compose-container flex-item flex-column">
     <h1>Compose New Blog </h1>
-    <form action="/newBlog" class="new-blog flex-item flex-column" method="post">
-        <input class="new-blog-heading" type="text" name="heading" placeholder="Heading" required>
+    <form action="/compose" class="new-blog flex-item flex-column" method="post">
+        <input class="new-blog-heading" type="text" name="heading" placeholder="Heading" autocomplete="off" required autofocus>
         <textarea class="new-blog-content" name="content" placeholder="Enter Content Here" required></textarea>
         <button class="compose-btn" type="submit">SUBMIT</button>
     </form>

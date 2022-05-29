@@ -1,4 +1,5 @@
 <%- include('header') -%>
+
 <div class='single-blog-container'>
     <div class="single-blog-heading flex-item">
         <h2>
@@ -11,8 +12,7 @@
         </h2>
     </div>
     <form action="/del" method="post">
-        <input type="text" style = "display: none;" name='blogId' value="<%= blog._id %>">
-        <button type="submit" class="del-btn">Delete this blog</button>
+        <button type="submit" class="del-btn" name="blogId" value="<%=blog._id%>">Delete this blog</button>
     </form>
 </div>
 

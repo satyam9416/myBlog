@@ -186,3 +186,40 @@ footer{
     border-radius: 6px;
     color: white;
 }
+
+/* ----------------------Register Page---------------------- */
+
+.register-heading{
+    color: green;
+    background-color: transparent;
+    border: 2px solid rgb(0, 255, 21);
+    height: 60px;
+}
+.register-form{
+    margin-top: 50px;
+    width: 100%;
+    gap: 35px;
+}
+.register-form input{
+    height: 70px;
+    width: 85%;
+    border-bottom: 2px solid rgb(0, 255, 21);
+    border-radius: 8px;
+    padding: 5px;
+    font-size: 23px;
+}
+.register-btn{
+    margin-top: 10px;
+    width: 70%;
+    height: 75px;
+    font-size: 27px;
+    color: darkgreen;
+    background-color: rgb(26, 240, 133);
+}
+.register-btn:hover{
+    background-color: rgb(88, 241, 165);
+}
+
+.sign-in-email{
+    margin-top: 65px;
+}

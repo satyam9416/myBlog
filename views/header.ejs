@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>welcome to myBlog | write an share your blog with others</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 
 <body>
@@ -16,5 +16,11 @@
             <li><a href="/">Home</a></li>
             <li><a href="/about">About</a></li>
             <li><a href="/compose">Compose</a></li>
+            <% if(signInStatus.signedin){ %>
+                <li><a href="/home"><%=userData.userName%></a></li>
+            <% }else{ %>
+                <li><a href="/register">Register</a></li>
+                <li><a href="/signin">Sign In</a></li>
+            <%}%>
         </ul>
     </nav>

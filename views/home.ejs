@@ -1,17 +1,19 @@
 <%- include('header') -%>
+
+
 <div class="all-blogs-container">
-    <% if(blogs.length === 0){%>
+    <% if(!userData.blogs){%>
         <div class="no-blog-heading flex-item">
             <h2>
                 No Blog . <a href="/compose">Create one</a>
             </h2>
         </div>
     <%}else{%>
-    <% for (let i = 0; i < blogs.length; i++ ){%>
+    <% for (let i = 0; i < userData.blogs.length; i++ ){%>
         <div class='blog-container' id="blog-container-<%=(i+1)%>">
-            <div class="blog-heading flex-item"><h2><%=blogs[i].heading%></h2></div>
-            <div class="blog-content"><h2><%=_.truncate(blogs[i].content, {length:400})%></h2></div>
-            <a class="more" href="/<%= _.kebabCase(blogs[i].heading) %>">read more</a>
+            <div class="blog-heading flex-item"><h2><%=userData.blogs[i].heading%></h2></div>
+            <div class="blog-content"><h2><%=_.truncate(userData.blogs[i].content, {length:400})%></h2></div>
+            <a class="more" href="/blogs/<%=userData.blogs[i]._id%>">read more</a>
         </div>
     <%}}%>
 </div>
