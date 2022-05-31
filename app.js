@@ -1,97 +1,113 @@
 // R E Q U I R E  S T U F F
+
 const express = require('express');
 const bodyParser = require('body-parser')
 const _ = require('lodash')
 const mongoose = require('mongoose');
 const { ObjectId } = require('mongodb')
+const session = require('express-session')
+const passport = require('passport')
+const LocalStrategy = require('passport-local').Strategy
+const passportLocalMongoose = require('passport-local-mongoose');
+const res = require('express/lib/response');
+const req = require('express/lib/request');
 
 
 
 //  D E C L A R A T I O N S
 
 const app = express()
-let userData = {}
-let signInStatus = {
-    signedin: false,
-    userId: ''
-}
 
 
-
-// C O N N E C T I N G  M O N G O O S E
+// M O N G O O S E  S T U F F
 
 mongoose.connect('mongodb+srv://satyam:passwd22@cluster0.qlui6.mongodb.net/myBlog')
 
 
 
+//  E X P R E S S  S T U F F
+
+app.set('view engine', 'ejs')                                // Setting up view engine a ejs
+app.use(bodyParser.urlencoded({ extended: true }))           // Setting Body-Parser
+app.use(express.static('public'))                            // Excessing static files
+// Passport initialization
+app.use(session({
+    secret: 'This is my secret',
+    resave: false,
+    saveUninitialized: false
+}))
+app.use(passport.initialize())
+app.use(passport.session())
+
+
+
 // M O N G O O S E  S C H E M A 
 
-const myBlogSchema = new mongoose.Schema({
+const blogsSchema = new mongoose.Schema({
     heading: String,
     content: String
 })
 
 const usersSchema = new mongoose.Schema({
-    userName: String,
+    username: String,
     email: {
         type: String,
         unique: true
     },
     key: String,
-    blogs: []
+    blogs: [{
+        heading : String,
+        content : String
+    }]
 })
+usersSchema.plugin(passportLocalMongoose)          // passport plugin
 
 
 
 // M O N G O O S E  M O D E L
 
-const BlogDb = mongoose.model('blog', myBlogSchema)
 const Users = mongoose.model('user', usersSchema)
 
 
+// P A S S P O R T  S T U F F
 
-// U N I V E R S A L  F U N C T I O N S
-
-
-
-const updateUserData = (callback) => {
-    if (signInStatus.signedin) {
-        Users.findOne({ _id: signInStatus.userId }, (err, docs) => {
-            if (docs) {
-                userData = docs
-            }
-            else if (err) {
-                console.log(err)
-            }
-            else {
-                console.log(`no data found`)
-            }
-            if (typeof callback == 'function') {
-                callback()
-            }
-        })
-    }
-    else {
-        if (typeof callback == 'function') {
-            callback()
+passport.use(new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'key'
+}, (username, password, done) => {
+    // console.log(`entered username : ${username} , entered password : ${password}`)
+    Users.findOne({ email: username }, (err, user) => {
+        if (!user) {
+            return done(null, false, { message: 'User not found' })
         }
-    }
-}
+        if (user.key !== password) {
+            return done(null, false, { message: 'Wrong password' })
+        }
+        // console.log(`user : ${user}`)
+        return done(null, user)
 
-//  E X P R E S S  S T U F F
+    })
+}))
 
-app.set('view engine', 'ejs')
-app.use(bodyParser.urlencoded({ extended: true }))
-app.use(express.static('public'))
+passport.serializeUser(Users.serializeUser())
+passport.deserializeUser(Users.deserializeUser())
 
 
 
 // G E T  R E Q U E S T S
 
-app.get('/home', (req, res) => {
-    updateUserData(() => {
-        res.render('home', { userData: userData, _: _, signInStatus: signInStatus })
-    })
+app.get('/home', (req, resp) => {
+    if (req.user) {
+        Users.findById((req.user._id), (err, user) => {
+            if (!err) {
+                // console.log(user)
+                resp.render('home', { userData: user, _: _ })
+            }
+        })
+    }
+    else {
+        resp.render('home', { userData: req.user })
+    }
 })
 
 app.get('/', (req, resp) => {
@@ -99,111 +115,88 @@ app.get('/', (req, resp) => {
 })
 
 app.get('/about', (req, resp) => {
-    resp.render('about', { signInStatus: signInStatus, userData: userData })
-})
-
-app.get('/contact', (req, resp) => {
-    { userData: userData }
-    resp.render('contact', { signInStatus: signInStatus, userData: userData })
+    resp.render('about', { userData: req.user })
 })
 
 app.get('/blogs/:pathName', (req, resp) => {
-    updateUserData(() => {
-
-
-        for (let i = 0; i < (userData.blogs).length; i++) {
-            if (req.params.pathName == userData.blogs[i]._id) {
-                resp.render('blog', {
-                    blog: userData.blogs[i], userData: userData, signInStatus: signInStatus
-                })
+    if (req.user) {
+        Users.findById(req.user._id, (err, docs) => {
+            if(!err){
+                let blog;
+                for(let i = 0; i < docs.blogs.length; i++){
+                    if(docs.blogs[i]._id == req.params.pathName){
+                        resp.render('blog', {userData: docs, blog : docs.blogs[i]})
+                    }
+                }
             }
-        }
-    })
+            else{
+                resp.send(`Something went wrong. Error : ${err}`)
+            }
+        })
+    }
+    else{
+        resp.redirect('/signin')
+    }
 })
 
 app.route('/compose')
     .get((req, resp) => {
-        resp.render('compose', {
-            signInStatus: signInStatus, userData: userData
-        })
+        if (req.user) {
+            resp.render('compose', { userData: req.user })
+        } else {
+            resp.redirect('/register')
+        }
     })
     .post((req, resp) => {
-        heading = req.body.heading
-        content = req.body.content
-        newBlog = { heading: heading, content: content }
-        const blog = new BlogDb(newBlog)
-        Users.updateOne({
-            _id: signInStatus.userId
-        },
-            {
-                $push: {
-                    blogs: { $each: [newBlog] }
-                }
-            },
-            (err) => {
-                if (!err) { resp.redirect(`/home`) }
-                else { resp.send('Kindly sign in first') }
-            })
+        let newBlog = {
+            heading: req.body.heading,
+            content: req.body.content
+        }
+        Users.findOneAndUpdate({ _id: req.user._id }, { $push: { 'blogs': newBlog } }, (err, user) => {
+            if (!err) {
+                console.log(user)
+                console.log(`new blog updated by ${req.user.username}`)
+                resp.redirect('./home')
+            } else {
+                console.log(`error : ${err}`)
+            }
+        })
     })
+
 
 
 app.route('/register')
     .get((req, resp) => {
-        resp.render('register', {
-            signInStatus: signInStatus, userData: userData
-        })
+        resp.render('register', { userData: req.user })
     })
     .post((req, resp) => {
-        let tempData = new Users({
-            userName: req.body.userName,
+        const newUser = new Users({
+            username: req.body.username,
             email: req.body.email,
             key: req.body.key
         })
-        console.log(tempData)
-        tempData.save((err, docs) => {
-            if (!err) {
-                console.log(`${docs.userName} registered as a new user`)
-                resp.redirect('/signin')
-            }
-            else {
-                console.log(`Something went wrong. Error : ${err}`)
-                resp.send(`Something went wrong. Error : ${err}`)
-            }
-        })
+        newUser.save().then(
+            resp.redirect(`/signin`)
+        )
+
     });
 
 app.route('/signin')
     .get((req, resp) => {
-        resp.render(`sign-in`, {
-            signInStatus: signInStatus, userData: userData
-        })
-    })
-    .post((req, resp) => {
-        const signInData = {
-            email: req.body.email,
-            key: req.body.key
-        }
-        Users.findOne(signInData, (err, docs) => {
-            if (docs) {
-                console.log(`User successfully Signed in as ${docs.userName}`)
-                signInStatus.signedin = true
-                signInStatus.userId = `${docs._id}`
-                resp.redirect('/home')
-            }
-            else {
-                console.log(`Unable to sign in : ${err}`)
-                resp.redirect('/home')
-            }
-        })
-    })
+        resp.render(`sign-in`, { userData: req.user })
+    });
+
+app.post('/signin', passport.authenticate('local', { failureRedirect: '/signin' }), (req, resp) => {
+    resp.redirect('/')
+})
 
 
 
 // P O S T  R E Q U E S T S
 
 app.post('/del', (req, resp) => {
-    const id = req.body.blogId
-    Users.updateOne({ 'blogs._id': ObjectId(id) }, {
+    if(req.user){const id = req.body.blogId
+    Users.updateOne({ _id : req.user._id, 'blogs._id': ObjectId(id) }, {
         $pull: { blogs: { _id: ObjectId(id) } }
     }, (err) => {
         if (!err) {
@@ -213,9 +206,11 @@ app.post('/del', (req, resp) => {
         else {
             console.log(`Something went wrong. error : ${err}`)
         }
-    })
+    })}
+    else{
+        resp.redirect('/signin')
+    }
 })
-
 
 
 // S T A R T I N G  T H E  S E R V E R 
