@@ -62,20 +62,14 @@ const usersSchema = new mongoose.Schema({
 })
 usersSchema.plugin(passportLocalMongoose)          // passport plugin
 
-
-
 // M O N G O O S E  M O D E L
 
 const Users = mongoose.model('user', usersSchema)
-
-
 // P A S S P O R T  S T U F F
-
 passport.use(new LocalStrategy({
     usernameField: 'email',
     passwordField: 'key'
 }, (username, password, done) => {
-    // console.log(`entered username : ${username} , entered password : ${password}`)
     Users.findOne({ email: username }, (err, user) => {
         if (!user) {
             return done(null, false, { message: 'User not found' })
@@ -83,19 +77,13 @@ passport.use(new LocalStrategy({
         if (user.key !== password) {
             return done(null, false, { message: 'Wrong password' })
         }
-        // console.log(`user : ${user}`)
         return done(null, user)
 
     })
 }))
-
 passport.serializeUser(Users.serializeUser())
 passport.deserializeUser(Users.deserializeUser())
-
-
-
 // G E T  R E Q U E S T S
-
 app.get('/home', (req, resp) => {
     if (req.user) {
         Users.findById((req.user._id), (err, user) => {
@@ -216,5 +204,5 @@ app.post('/del', (req, resp) => {
 // S T A R T I N G  T H E  S E R V E R 
 
 app.listen(process.env.PORT || 3000, () => {
-    console.log(`Server stared...`)
+    console.log(`Server stared..., Running on port ${3000}`)
 })
