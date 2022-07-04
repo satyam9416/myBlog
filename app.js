@@ -21,7 +21,6 @@ const app = express()
 
 // M O N G O O S E  S T U F F
 
-mongoose.connect('mongodb+srv://satyam:passwd22@cluster0.qlui6.mongodb.net/myBlog')
 
 
 
@@ -201,8 +200,10 @@ app.post('/del', (req, resp) => {
 })
 
 
-// S T A R T I N G  T H E  S E R V E R 
+// E S T A B L I S H I N G  C O N N E C T I O N 
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log(`Server stared..., Running on port ${3000}`)
+mongoose.connect('process.env.MONGO_SERVER', () => {
+    app.listen(process.env.PORT || 3000, () => {
+        console.log(`Server stared..., Running on port ${3000}`)
+    })
 })
