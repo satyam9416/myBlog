@@ -9,20 +9,10 @@ const session = require('express-session')
 const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const passportLocalMongoose = require('passport-local-mongoose');
-const res = require('express/lib/response');
-const req = require('express/lib/request');
-
-
-
-//  D E C L A R A T I O N S
-
+// const res = require('express/lib/response');
+// const req = require('express/lib/request');
 const app = express()
-
-
-// M O N G O O S E  S T U F F
-
-
-
+require('dotenv').config();
 
 //  E X P R E S S  S T U F F
 
@@ -55,8 +45,8 @@ const usersSchema = new mongoose.Schema({
     },
     key: String,
     blogs: [{
-        heading : String,
-        content : String
+        heading: String,
+        content: String
     }]
 })
 usersSchema.plugin(passportLocalMongoose)          // passport plugin
@@ -80,14 +70,16 @@ passport.use(new LocalStrategy({
 
     })
 }))
+
 passport.serializeUser(Users.serializeUser())
 passport.deserializeUser(Users.deserializeUser())
+
+
 // G E T  R E Q U E S T S
 app.get('/home', (req, resp) => {
     if (req.user) {
         Users.findById((req.user._id), (err, user) => {
             if (!err) {
-                // console.log(user)
                 resp.render('home', { userData: user, _: _ })
             }
         })
@@ -105,23 +97,27 @@ app.get('/about', (req, resp) => {
     resp.render('about', { userData: req.user })
 })
 
+app.get('/error', (req, resp) => {
+    resp.send(`Something went wrong. try again later`)
+})
+
 app.get('/blogs/:pathName', (req, resp) => {
     if (req.user) {
         Users.findById(req.user._id, (err, docs) => {
-            if(!err){
+            if (!err) {
                 let blog;
-                for(let i = 0; i < docs.blogs.length; i++){
-                    if(docs.blogs[i]._id == req.params.pathName){
-                        resp.render('blog', {userData: docs, blog : docs.blogs[i]})
+                for (let i = 0; i < docs.blogs.length; i++) {
+                    if (docs.blogs[i]._id == req.params.pathName) {
+                        resp.render('blog', { userData: docs, blog: docs.blogs[i] })
                     }
                 }
             }
-            else{
+            else {
                 resp.send(`Something went wrong. Error : ${err}`)
             }
         })
     }
-    else{
+    else {
         resp.redirect('/signin')
     }
 })
@@ -156,24 +152,30 @@ app.route('/register')
     .get((req, resp) => {
         resp.render('register', { userData: req.user })
     })
-    .post((req, resp) => {
+    .post(async (req, resp) => {
         const newUser = new Users({
             username: req.body.username,
             email: req.body.email,
             key: req.body.key
         })
-        newUser.save().then(
-            resp.redirect(`/signin`)
-        )
+        try {
+            await newUser.save()
+            resp.status(200).redirect(`/signin`)
+        } catch (error) {
+            console.log(error)
+            error.code === 11000 ?
+                resp.status(404).send('Already registered') :
+                resp.status(404).send(error)
+        }
 
     });
 
 app.route('/signin')
     .get((req, resp) => {
         resp.render(`sign-in`, { userData: req.user })
-    });
+    })
 
-app.post('/signin', passport.authenticate('local', { failureRedirect: '/signin' }), (req, resp) => {
+app.post('/signin', passport.authenticate('local', { failureRedirect: '/error' }), (req, resp) => {
     resp.redirect('/')
 })
 
@@ -182,19 +184,21 @@ app.post('/signin', passport.authenticate('local', { failureRedirect: '/signin' 
 // P O S T  R E Q U E S T S
 
 app.post('/del', (req, resp) => {
-    if(req.user){const id = req.body.blogId
-    Users.updateOne({ _id : req.user._id, 'blogs._id': ObjectId(id) }, {
-        $pull: { blogs: { _id: ObjectId(id) } }
-    }, (err) => {
-        if (!err) {
-            console.log('Blog delted successfully')
-            resp.redirect('/home')
-        }
-        else {
-            console.log(`Something went wrong. error : ${err}`)
-        }
-    })}
-    else{
+    if (req.user) {
+        const id = req.body.blogId
+        Users.updateOne({ _id: req.user._id, 'blogs._id': ObjectId(id) }, {
+            $pull: { blogs: { _id: ObjectId(id) } }
+        }, (err) => {
+            if (!err) {
+                console.log('Blog deleted successfully')
+                resp.redirect('/home')
+            }
+            else {
+                console.log(`Something went wrong. error : ${err}`)
+            }
+        })
+    }
+    else {
         resp.redirect('/signin')
     }
 })
@@ -202,7 +206,7 @@ app.post('/del', (req, resp) => {
 
 // E S T A B L I S H I N G  C O N N E C T I O N 
 
-mongoose.connect('process.env.MONGO_SERVER', () => {
+mongoose.connect(process.env.MONGO_SERVER, () => {
     app.listen(process.env.PORT || 3000, () => {
         console.log(`Server stared..., Running on port ${3000}`)
     })

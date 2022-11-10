@@ -223,3 +223,13 @@ footer{
 .sign-in-email{
     margin-top: 65px;
 }
+
+.about-div{
+    /* background-color: rgb(238, 149, 149); */
+    border-radius: 10px;
+    align-self: center;
+    justify-self: center;
+    margin: 25px auto;
+    position: relative;
+    display: inline-block;
+}
